@@ -23,7 +23,7 @@ connectDB();
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL?.split(',') || ['https://your-frontend-domain.com']
+    ? ['https://wanderlust-lilac-five.vercel.app', 'https://your-frontend-domain.com']
     : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
 }));
