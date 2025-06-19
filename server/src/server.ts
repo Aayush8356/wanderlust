@@ -22,9 +22,7 @@ connectDB();
 
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://wanderlust-lilac-five.vercel.app', 'https://your-frontend-domain.com']
-    : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
