@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { JournalEntry, Trip } from '../types';
+import type { JournalEntry, Trip } from '../types';
 import apiService from '../services/api';
 import JournalCard from '../components/journal/JournalCard';
 import JournalForm from '../components/journal/JournalForm';

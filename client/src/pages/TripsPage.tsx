@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trip } from '../types';
+import type { Trip } from '../types';
 import apiService from '../services/api';
 import TripCard from '../components/trip/TripCard';
 import TripForm from '../components/trip/TripForm';

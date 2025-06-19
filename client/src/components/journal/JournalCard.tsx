@@ -1,5 +1,5 @@
 import React from 'react';
-import { JournalEntry } from '../../types';
+import type { JournalEntry } from '../../types';
 import { formatDate, formatRelativeDate } from '../../utils/dateUtils';
 
 interface JournalCardProps {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { JournalEntry, Trip } from '../../types';
+import type { JournalEntry, Trip } from '../../types';
 
 interface JournalFormProps {
   entry?: JournalEntry | null;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trip } from '../../types';
+import type { Trip } from '../../types';
 
 interface TripFormProps {
   trip?: Trip | null;
