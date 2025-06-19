@@ -31,6 +31,7 @@ class ApiService {
         if (error.response?.status === 401) {
           // Only redirect to login for protected routes, not for optional auth endpoints
           const isProtectedRoute = error.config?.url?.includes('/trips') || 
+                                 error.config?.url?.includes('/journal') ||
                                  error.config?.url?.includes('/auth/me') ||
                                  error.config?.url?.includes('/auth/logout');
           
@@ -88,6 +89,38 @@ class ApiService {
 
   async deleteTrip(id: string): Promise<any> {
     const response = await this.api.delete(`/trips/${id}`);
+    return response.data;
+  }
+
+  // Journal API
+  async getJournalEntries(tripId?: string): Promise<any> {
+    const params = tripId ? { tripId } : {};
+    const response = await this.api.get('/journal', { params });
+    return response.data;
+  }
+
+  async createJournalEntry(journalData: any): Promise<any> {
+    const response = await this.api.post('/journal', journalData);
+    return response.data;
+  }
+
+  async getJournalEntryById(id: string): Promise<any> {
+    const response = await this.api.get(`/journal/${id}`);
+    return response.data;
+  }
+
+  async updateJournalEntry(id: string, journalData: any): Promise<any> {
+    const response = await this.api.put(`/journal/${id}`, journalData);
+    return response.data;
+  }
+
+  async deleteJournalEntry(id: string): Promise<any> {
+    const response = await this.api.delete(`/journal/${id}`);
+    return response.data;
+  }
+
+  async getJournalStats(): Promise<any> {
+    const response = await this.api.get('/journal/stats');
     return response.data;
   }
 

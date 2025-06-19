@@ -87,13 +87,8 @@ const ExplorePage: React.FC = () => {
         const gap = isMobile ? 16 : 24; // Gap from CSS: 1rem = 16px mobile, 1.5rem = 24px desktop
         const totalCardWidth = cardWidth + gap;
         
-        // Calculate the container center
-        const containerWidth = carouselRef.current.offsetWidth;
-        const centerOffset = (containerWidth / 2) - (cardWidth / 2);
-        
-        // Calculate position - ensure we show 3 cards at a time with center focus
-        const adjustedIndex = currentCarouselIndex % 6; // Reset every 6 cards to avoid infinite offset
-        const translateX = centerOffset - (adjustedIndex * totalCardWidth);
+        // Start from left edge without any gap
+        const translateX = -(currentCarouselIndex % 6) * totalCardWidth;
         
         track.style.transform = `translateX(${translateX}px)`;
       }
@@ -441,7 +436,6 @@ const ExplorePage: React.FC = () => {
           
           <div className="destinations-carousel-container" ref={carouselRef}>
             <div className="destinations-track">
-              {/* Duplicate items for infinite effect */}
               {[...featuredDestinations, ...featuredDestinations, ...featuredDestinations].map((destination, index) => (
                   <div 
                     key={`${destination.name}-${index}`}

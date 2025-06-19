@@ -7,7 +7,8 @@
     "start": "node dist/server.js",
     "dev": "nodemon src/server.ts",
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "npm run build"
   },
   "keywords": ["express", "typescript", "mongodb", "jwt"],
   "author": "WanderLog Team",

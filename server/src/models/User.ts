@@ -11,6 +11,7 @@ export interface IUser extends Document {
   dateJoined: Date;
   lastLogin?: Date;
   trips: mongoose.Types.ObjectId[];
+  journalEntries: mongoose.Types.ObjectId[];
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -51,6 +52,10 @@ const UserSchema = new Schema<IUser>({
   trips: [{
     type: Schema.Types.ObjectId,
     ref: 'Trip',
+  }],
+  journalEntries: [{
+    type: Schema.Types.ObjectId,
+    ref: 'JournalEntry',
   }],
 }, {
   timestamps: true,
