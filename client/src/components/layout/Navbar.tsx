@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const Navbar: React.FC = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -37,6 +38,14 @@ const Navbar: React.FC = () => {
     setIsProfileDropdownOpen(!isProfileDropdownOpen);
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   const isActive = (path: string) => {
     return location.pathname === path;
   };
@@ -52,11 +61,12 @@ const Navbar: React.FC = () => {
   return (
     <nav className="navbar">
       <div className="navbar-container">
-        <Link to="/" className="navbar-brand">
+        <Link to="/" className="navbar-brand" onClick={closeMobileMenu}>
           WanderLog
         </Link>
         
-        <div className="navbar-nav">
+        {/* Desktop Navigation */}
+        <div className="navbar-nav desktop-nav">
           {navLinks.map(link => {
             if (!link.public && !isAuthenticated) return null;
             return (
@@ -71,7 +81,8 @@ const Navbar: React.FC = () => {
           })}
         </div>
 
-        <div className="nav-buttons">
+        {/* Desktop Auth Buttons */}
+        <div className="nav-buttons desktop-nav">
           {isAuthenticated ? (
             <div className="profile-dropdown-container" ref={dropdownRef}>
               <button 
@@ -158,7 +169,88 @@ const Navbar: React.FC = () => {
             </>
           )}
         </div>
+
+        {/* Mobile Menu Toggle */}
+        <button 
+          className="mobile-menu-toggle"
+          onClick={toggleMobileMenu}
+          aria-label="Toggle mobile menu"
+        >
+          <svg 
+            className={`hamburger ${isMobileMenuOpen ? 'active' : ''}`}
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none"
+          >
+            <path 
+              d="M3 12h18M3 6h18M3 18h18" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="mobile-menu">
+          <div className="mobile-menu-content">
+            {navLinks.map(link => {
+              if (!link.public && !isAuthenticated) return null;
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`mobile-nav-link ${isActive(link.path) ? 'active' : ''}`}
+                  onClick={closeMobileMenu}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+            
+            {isAuthenticated ? (
+              <>
+                <div className="mobile-user-info">
+                  <div className="mobile-avatar">
+                    <span className="mobile-initials">
+                      {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                    </span>
+                  </div>
+                  <div className="mobile-user-details">
+                    <div className="mobile-user-name">
+                      {user?.firstName} {user?.lastName}
+                    </div>
+                    <div className="mobile-user-email">
+                      {user?.email}
+                    </div>
+                  </div>
+                </div>
+                <div className="mobile-divider"></div>
+                <Link to="/profile" className="mobile-nav-link" onClick={closeMobileMenu}>
+                  <span className="mobile-icon">👤</span>
+                  Profile Settings
+                </Link>
+                <Link to="/settings" className="mobile-nav-link" onClick={closeMobileMenu}>
+                  <span className="mobile-icon">⚙️</span>
+                  Settings
+                </Link>
+                <button onClick={() => { handleLogout(); closeMobileMenu(); }} className="mobile-nav-link logout">
+                  <span className="mobile-icon">🚪</span>
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="mobile-nav-link" onClick={closeMobileMenu}>Login</Link>
+                <Link to="/register" className="mobile-nav-link primary" onClick={closeMobileMenu}>Sign Up</Link>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 };
