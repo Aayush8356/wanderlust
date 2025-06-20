@@ -101,6 +101,17 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     }
   }, [images.length]);
 
+  // Navigation functions
+  const goToPrevious = () => {
+    setCurrentStartIndex(prev => 
+      prev === 0 ? images.length - 1 : prev - 1
+    );
+  };
+
+  const goToNext = () => {
+    setCurrentStartIndex(prev => (prev + 1) % images.length);
+  };
+
   // Get 2 images to display (with wraparound)
   const getDisplayedImages = () => {
     if (images.length <= 2) {
@@ -161,13 +172,21 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           <span className="indicator-text">
             Showing {currentStartIndex + 1}-{Math.min(currentStartIndex + 2, images.length)} of {images.length}
           </span>
-          <div className="indicator-dots">
-            {Array.from({ length: images.length }).map((_, index) => (
-              <div
-                key={index}
-                className={`dot ${index >= currentStartIndex && index < currentStartIndex + 2 ? 'active' : ''}`}
-              />
-            ))}
+          <div className="carousel-navigation">
+            <button 
+              className="nav-arrow"
+              onClick={goToPrevious}
+              title="Previous images"
+            >
+              ←
+            </button>
+            <button 
+              className="nav-arrow"
+              onClick={goToNext}
+              title="Next images"
+            >
+              →
+            </button>
           </div>
         </div>
       )}

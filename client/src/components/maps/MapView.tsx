@@ -10,6 +10,7 @@ interface MapViewProps {
   style?: string;
   locationName?: string;
   showLocationSearch?: boolean;
+  hideHeader?: boolean;
 }
 
 interface LocationResult {
@@ -37,7 +38,8 @@ const MapView: React.FC<MapViewProps> = ({
   height = 400,
   style = 'streets-v11',
   locationName,
-  showLocationSearch = false
+  showLocationSearch = false,
+  hideHeader = false
 }) => {
   const [mapUrl, setMapUrl] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -50,6 +52,14 @@ const MapView: React.FC<MapViewProps> = ({
     longitude,
     name: locationName || 'Selected Location'
   });
+
+  useEffect(() => {
+    setCurrentLocation({
+      latitude,
+      longitude,
+      name: locationName || 'Selected Location'
+    });
+  }, [latitude, longitude, locationName]);
 
   useEffect(() => {
     fetchStaticMap();
@@ -187,12 +197,14 @@ const MapView: React.FC<MapViewProps> = ({
       )}
 
       <div className="map-container" style={{ width, height }}>
-        <div className="map-header">
-          <h4 className="map-title">{currentLocation.name}</h4>
-          <div className="map-coordinates">
-            {currentLocation.latitude.toFixed(4)}, {currentLocation.longitude.toFixed(4)}
+        {!hideHeader && (
+          <div className="map-header">
+            <h4 className="map-title">{currentLocation.name}</h4>
+            <div className="map-coordinates">
+              {currentLocation.latitude.toFixed(4)}, {currentLocation.longitude.toFixed(4)}
+            </div>
           </div>
-        </div>
+        )}
         
         <div className="map-image-container">
           <img
@@ -206,14 +218,15 @@ const MapView: React.FC<MapViewProps> = ({
           <div className="map-overlay">
             <div className="map-controls">
               <button 
-                className="map-control-btn"
-                onClick={() => window.open(`https://www.google.com/maps/@${currentLocation.latitude},${currentLocation.longitude},${zoom}z`, '_blank')}
+                className="map-control-btn google-maps-btn"
+                onClick={() => window.open(`https://www.google.com/maps/place/${currentLocation.latitude},${currentLocation.longitude}/@${currentLocation.latitude},${currentLocation.longitude},12z`, '_blank')}
                 title="Open in Google Maps"
               >
-                🗺️
+                <span className="btn-icon">📍</span>
+                <span className="btn-text">View in Google Maps</span>
               </button>
               <button 
-                className="map-control-btn"
+                className="map-control-btn refresh-btn"
                 onClick={fetchStaticMap}
                 title="Refresh map"
               >

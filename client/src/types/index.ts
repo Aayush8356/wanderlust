@@ -110,3 +110,56 @@ export interface ApiError {
   message: string;
   errors?: string;
 }
+
+// ===== BEST TIME TO VISIT INTERFACES =====
+
+export interface BestTimeData {
+  cityId: number;
+  cityName: string;
+  countryName: string;
+  latitude: number;
+  longitude: number;
+  bestMonths: number[];
+  bestTimeSummary: string;
+  weatherSummary: string;
+  touristSummary: string;
+  idealTripDuration: number;
+  dataConfidence: number;
+  notes?: string;
+}
+
+export interface MonthlyClimateData {
+  month: number;
+  avgTempCelsius: number;
+  avgHighCelsius: number;
+  avgLowCelsius: number;
+  avgRainfallMm: number;
+  avgHumidityPercent: number;
+  avgSunshineHours: number;
+  avgRainyDays: number;
+  visitorVolumeScore?: number;
+  priceIndex?: number;
+  tourismSeason?: string;
+}
+
+export interface CityActivity {
+  activityName: string;
+  activityType: string;
+  bestMonths: number[];
+  availableMonths: number[];
+  description: string;
+}
+
+export interface LocationSearchResult {
+  cityId: number;
+  cityName: string;
+  countryName: string;
+  distance: number;
+  bestTimeData?: BestTimeData;
+}
+
+export interface BestTimeResponse {
+  success: boolean;
+  message: string;
+  data: BestTimeData | null;
+}

@@ -5,10 +5,41 @@ import { useAuth } from '../../context/AuthContext';
 const Navbar: React.FC = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
+
+  // Handle scroll for navbar hide/show and background change
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Set scrolled state for background change
+      setIsScrolled(currentScrollY > 10);
+      
+      // Hide/show navbar based on scroll direction
+      if (currentScrollY < 100) {
+        // Always show navbar near top
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        // Scrolling down - hide navbar
+        setIsVisible(false);
+        setIsProfileDropdownOpen(false); // Close dropdown when hiding
+      } else if (currentScrollY < lastScrollY.current) {
+        // Scrolling up - show navbar
+        setIsVisible(true);
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -59,7 +90,7 @@ const Navbar: React.FC = () => {
   ];
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${isScrolled ? 'scrolled' : ''} ${isVisible ? 'visible' : 'hidden'}`}>
       <div className="navbar-container">
         <Link to="/" className="navbar-brand" onClick={closeMobileMenu}>
           WanderLog
@@ -164,8 +195,12 @@ const Navbar: React.FC = () => {
             </div>
           ) : (
             <>
-              <Link to="/login" className="nav-link">Login</Link>
-              <Link to="/register" className="btn-primary">Sign Up</Link>
+              <Link to="/login" className="nav-link login-button">
+                Login
+              </Link>
+              <Link to="/register" className="btn-primary signup-button">
+                Sign Up
+              </Link>
             </>
           )}
         </div>
@@ -244,8 +279,12 @@ const Navbar: React.FC = () => {
               </>
             ) : (
               <>
-                <Link to="/login" className="mobile-nav-link" onClick={closeMobileMenu}>Login</Link>
-                <Link to="/register" className="mobile-nav-link primary" onClick={closeMobileMenu}>Sign Up</Link>
+                <Link to="/login" className="mobile-nav-link login-mobile" onClick={closeMobileMenu}>
+                  Login
+                </Link>
+                <Link to="/register" className="mobile-nav-link primary signup-mobile" onClick={closeMobileMenu}>
+                  Sign Up
+                </Link>
               </>
             )}
           </div>

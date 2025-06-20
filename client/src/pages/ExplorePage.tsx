@@ -5,6 +5,7 @@ import ImageGallery from '../components/images/ImageGallery';
 import DestinationImage from '../components/images/DestinationImage';
 import MapView from '../components/maps/MapView';
 import apiService from '../services/api';
+import type { BestTimeData } from '../types';
 
 const ExplorePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -15,7 +16,12 @@ const ExplorePage: React.FC = () => {
     coordinates?: { latitude: number; longitude: number };
     flag?: string;
     description?: string;
+    bestTime?: string;
+    highlights?: string[];
+    bestTimeData?: BestTimeData;
+    bestTimeSearchCompleted?: boolean;
   } | null>(null);
+  const [loadingBestTime, setLoadingBestTime] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -26,6 +32,108 @@ const ExplorePage: React.FC = () => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
+
+  // Function to fetch best time data for a destination
+  const fetchBestTimeData = async (destination: any) => {
+    setLoadingBestTime(true);
+    
+    // Set timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      console.log('⏰ Best time data fetch timeout');
+      setLoadingBestTime(false);
+      setSelectedDestination(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          bestTimeSearchCompleted: true
+        };
+      });
+    }, 10000); // 10 second timeout
+
+    try {
+      let bestTimeData: BestTimeData | null = null;
+
+      console.log('🔍 Fetching best time data for:', destination.name);
+
+      // Try multiple approaches to get best time data
+      // 1. First try by city name and country
+      if (destination.city && destination.country) {
+        try {
+          console.log('🏙️ Trying city + country search:', destination.city, destination.country);
+          const response = await apiService.getBestTimeByCity(destination.city, destination.country);
+          if (response.success && response.data) {
+            bestTimeData = response.data;
+            console.log('✅ Found data via city + country');
+          }
+        } catch (error) {
+          console.log('❌ City + country search failed:', error);
+        }
+      }
+
+      // 2. If no data found, try by coordinates if available
+      if (!bestTimeData && destination.coordinates) {
+        try {
+          console.log('📍 Trying coordinates search:', destination.coordinates);
+          const response = await apiService.getBestTimeByCoordinates(
+            destination.coordinates.latitude,
+            destination.coordinates.longitude,
+            150 // 150km radius
+          );
+          if (response.success && response.data) {
+            bestTimeData = response.data;
+            console.log('✅ Found nearby data via coordinates');
+          }
+        } catch (error) {
+          console.log('❌ Coordinates search failed:', error);
+        }
+      }
+
+      // 3. If still no data, try by full destination name
+      if (!bestTimeData) {
+        try {
+          console.log('🔎 Trying full name search:', destination.name);
+          const response = await apiService.getBestTimeBySearch(destination.name);
+          if (response.success && response.data) {
+            bestTimeData = response.data;
+            console.log('✅ Found data via name search');
+          }
+        } catch (error) {
+          console.log('❌ Name search failed:', error);
+        }
+      }
+
+      console.log('📊 Final result:', bestTimeData ? 'Data found' : 'No data available');
+
+      // Clear timeout since we completed successfully
+      clearTimeout(timeout);
+
+      // Update destination with best time data
+      setSelectedDestination(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          bestTimeData,
+          bestTime: bestTimeData ? bestTimeData.bestTimeSummary : prev.bestTime,
+          bestTimeSearchCompleted: true // Mark search as completed
+        };
+      });
+
+    } catch (error) {
+      console.error('❌ Error fetching best time data:', error);
+      // Clear timeout
+      clearTimeout(timeout);
+      // Ensure loading stops even on error
+      setSelectedDestination(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          bestTimeSearchCompleted: true
+        };
+      });
+    } finally {
+      setLoadingBestTime(false);
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -66,6 +174,13 @@ const ExplorePage: React.FC = () => {
           block: 'start'
         });
       }, 100);
+    }
+  }, [selectedDestination]);
+
+  // Fetch best time data when destination is selected
+  useEffect(() => {
+    if (selectedDestination && !selectedDestination.bestTimeData && !selectedDestination.bestTimeSearchCompleted && !loadingBestTime) {
+      fetchBestTimeData(selectedDestination);
     }
   }, [selectedDestination]);
 
@@ -436,7 +551,7 @@ const ExplorePage: React.FC = () => {
             </div>
             
             <div className="destination-content-premium">
-              {/* Top Row - Weather and Map */}
+              {/* Top Row - Weather, Map, and Best Time */}
               <div className="info-row top-row">
                 {/* Weather Panel */}
                 <div className="info-panel-compact weather-panel-compact">
@@ -452,6 +567,176 @@ const ExplorePage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Best Time Panel */}
+                <div className="info-panel-compact besttime-panel-compact">
+                  <div className="panel-header-compact">
+                    <div className="panel-icon-compact">🗓️</div>
+                    <h3 className="panel-title-compact">Best Time to Visit</h3>
+                  </div>
+                  <div className="panel-content-compact">
+                    {loadingBestTime ? (
+                      <div className="besttime-loading">
+                        <div className="loading-spinner"></div>
+                        <p>Loading travel insights...</p>
+                      </div>
+                    ) : selectedDestination.bestTimeData ? (
+                      <div className="besttime-content">
+                        <div className="calendar-showcase">
+                          <div className="calendar-visual">
+                            <div className="calendar-header">
+                              <div className="calendar-year">2025</div>
+                              <div className="data-confidence">
+                                <div className="confidence-badge">
+                                  {Math.round(selectedDestination.bestTimeData.dataConfidence * 100)}% confidence
+                                </div>
+                                {selectedDestination.bestTimeData.accuracyScore && (
+                                  <div className="accuracy-badge">
+                                    {Math.round(selectedDestination.bestTimeData.accuracyScore * 100)}% accuracy
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="calendar-months">
+                              {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, idx) => {
+                                const monthNum = idx + 1;
+                                const isBestMonth = selectedDestination.bestTimeData?.bestMonths.includes(monthNum);
+                                const isShoulderMonth = selectedDestination.bestTimeData?.shoulderMonths?.includes(monthNum);
+                                const isAvoidMonth = selectedDestination.bestTimeData?.avoidMonths?.includes(monthNum);
+                                
+                                let className = 'calendar-month';
+                                if (isBestMonth) className += ' optimal';
+                                else if (isShoulderMonth) className += ' shoulder';
+                                else if (isAvoidMonth) className += ' avoid';
+                                
+                                return (
+                                  <div key={month} className={className}>
+                                    {month}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div className="besttime-details">
+                            <div className="besttime-period">{selectedDestination.bestTimeData.bestTimeSummary}</div>
+                            <div className="besttime-description">{selectedDestination.bestTimeData.weatherSummary}</div>
+                            {selectedDestination.bestTimeData.crowdSummary && (
+                              <div className="crowd-summary">
+                                <span className="crowd-icon">👥</span>
+                                {selectedDestination.bestTimeData.crowdSummary}
+                              </div>
+                            )}
+                            {selectedDestination.bestTimeData.priceSummary && (
+                              <div className="price-summary">
+                                <span className="price-icon">💰</span>
+                                {selectedDestination.bestTimeData.priceSummary}
+                              </div>
+                            )}
+                            {selectedDestination.bestTimeData.idealTripDuration && (
+                              <div className="trip-duration">
+                                <span className="duration-icon">⏱️</span>
+                                Ideal stay: {selectedDestination.bestTimeData.idealTripDuration} days
+                              </div>
+                            )}
+                            {selectedDestination.bestTimeData.dataSource && (
+                              <div className="data-source">
+                                <span className="source-icon">📊</span>
+                                {selectedDestination.bestTimeData.dataSource}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {selectedDestination.bestTimeData.warnings && selectedDestination.bestTimeData.warnings.length > 0 && (
+                          <div className="besttime-warnings">
+                            <div className="warning-label">⚠️ Important Warnings:</div>
+                            <div className="warning-items">
+                              {selectedDestination.bestTimeData.warnings.map((warning, idx) => (
+                                <div key={idx} className="warning-item">{warning}</div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {selectedDestination.bestTimeData.personalizedTips && selectedDestination.bestTimeData.personalizedTips.length > 0 && (
+                          <div className="besttime-tips">
+                            <div className="tips-label">💡 Travel Tips:</div>
+                            <div className="tip-items">
+                              {selectedDestination.bestTimeData.personalizedTips.map((tip, idx) => (
+                                <div key={idx} className="tip-item">{tip}</div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {selectedDestination.highlights && (
+                          <div className="besttime-highlights">
+                            <div className="highlight-label">Must-see attractions:</div>
+                            <div className="highlight-tags">
+                              {selectedDestination.highlights.slice(0, 2).map((highlight, idx) => (
+                                <span key={idx} className="highlight-tag-small">{highlight}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : selectedDestination.bestTime ? (
+                      // Fallback to original best time display if no database data
+                      <div className="besttime-content">
+                        <div className="calendar-showcase">
+                          <div className="calendar-visual">
+                            <div className="calendar-header">
+                              <div className="calendar-year">2025</div>
+                            </div>
+                            <div className="calendar-months">
+                              {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, idx) => {
+                                const isOptimal = selectedDestination.bestTime?.toLowerCase().includes(month.toLowerCase());
+                                const isInRange = (() => {
+                                  const bestTime = selectedDestination.bestTime?.toLowerCase() || '';
+                                  if (bestTime.includes('april') && bestTime.includes('october')) {
+                                    return idx >= 3 && idx <= 9; // Apr to Oct
+                                  }
+                                  if (bestTime.includes('march') && bestTime.includes('may')) {
+                                    return idx >= 2 && idx <= 4; // Mar to May
+                                  }
+                                  if (bestTime.includes('november') && bestTime.includes('march')) {
+                                    return idx >= 10 || idx <= 2; // Nov to Mar
+                                  }
+                                  return isOptimal;
+                                })();
+                                return (
+                                  <div key={month} className={`calendar-month ${isInRange ? 'optimal' : ''}`}>
+                                    {month}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div className="besttime-details">
+                            <div className="besttime-period">{selectedDestination.bestTime}</div>
+                            <div className="besttime-description">Ideal weather conditions</div>
+                          </div>
+                        </div>
+                        {selectedDestination.highlights && (
+                          <div className="besttime-highlights">
+                            <div className="highlight-label">Must-see attractions:</div>
+                            <div className="highlight-tags">
+                              {selectedDestination.highlights.slice(0, 2).map((highlight, idx) => (
+                                <span key={idx} className="highlight-tag-small">{highlight}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      // No best time data available
+                      <div className="besttime-content">
+                        <div className="no-data-message">
+                          <div className="no-data-icon">📅</div>
+                          <p>Best time information not available for this location</p>
+                          <small>Try searching for a popular destination</small>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Map Panel */}
                 <div className="info-panel-compact map-panel-compact">
                   <div className="panel-header-compact">
@@ -464,14 +749,15 @@ const ExplorePage: React.FC = () => {
                         latitude={selectedDestination.coordinates.latitude}
                         longitude={selectedDestination.coordinates.longitude}
                         locationName={selectedDestination.name}
-                        width={360}
-                        height={180}
-                        zoom={12}
+                        width={600}
+                        height={400}
+                        zoom={6}
+                        hideHeader={true}
                       />
                     ) : (
-                      <div className="map-unavailable-compact">
+                      <div className="map-unavailable-full">
                         <div className="unavailable-icon">📍</div>
-                        <p>Location map temporarily unavailable</p>
+                        <p>Map unavailable</p>
                       </div>
                     )}
                   </div>
