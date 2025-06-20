@@ -1,23 +1,17 @@
 import { Router, Request, Response } from 'express';
 import BestTimeService from '../services/bestTimeService';
-import { pool } from '../config/database'; // Assuming you have a database config
+import { pool } from '../config/database';
 
 const router = Router();
 const bestTimeService = new BestTimeService(pool);
 
-/**
- * GET /api/best-time/city/:cityName
- * Get best time to visit for a specific city
- */
+// GET /city/:cityName
 router.get('/city/:cityName', async (req: Request, res: Response) => {
   try {
     const { cityName } = req.params;
     const { country } = req.query;
 
-    const bestTimeData = await bestTimeService.getBestTimeByCity(
-      cityName, 
-      country as string
-    );
+    const bestTimeData = await bestTimeService.getBestTimeByCity(cityName, country as string);
 
     if (!bestTimeData) {
       return res.status(404).json({
@@ -27,14 +21,14 @@ router.get('/city/:cityName', async (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Best time data retrieved successfully',
       data: bestTimeData
     });
   } catch (error) {
     console.error('Error in /city/:cityName route:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -42,10 +36,7 @@ router.get('/city/:cityName', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/best-time/coordinates
- * Get best time data for coordinates (finds nearest city with data)
- */
+// GET /coordinates
 router.get('/coordinates', async (req: Request, res: Response) => {
   try {
     const { lat, lng, radius } = req.query;
@@ -70,11 +61,7 @@ router.get('/coordinates', async (req: Request, res: Response) => {
       });
     }
 
-    const bestTimeData = await bestTimeService.getBestTimeByCoordinates(
-      latitude, 
-      longitude, 
-      searchRadius
-    );
+    const bestTimeData = await bestTimeService.getBestTimeByCoordinates(latitude, longitude, searchRadius);
 
     if (!bestTimeData) {
       return res.status(404).json({
@@ -84,14 +71,14 @@ router.get('/coordinates', async (req: Request, res: Response) => {
       });
     }
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Best time data retrieved successfully',
       data: bestTimeData
     });
   } catch (error) {
     console.error('Error in /coordinates route:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -99,10 +86,7 @@ router.get('/coordinates', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/best-time/city/:cityId/climate
- * Get monthly climate data for a city
- */
+// GET /city/:cityId/climate
 router.get('/city/:cityId/climate', async (req: Request, res: Response) => {
   try {
     const { cityId } = req.params;
@@ -118,14 +102,14 @@ router.get('/city/:cityId/climate', async (req: Request, res: Response) => {
 
     const climateData = await bestTimeService.getMonthlyClimateData(id);
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Climate data retrieved successfully',
       data: climateData
     });
   } catch (error) {
     console.error('Error in /city/:cityId/climate route:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -133,10 +117,7 @@ router.get('/city/:cityId/climate', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/best-time/city/:cityId/activities
- * Get activities for a city
- */
+// GET /city/:cityId/activities
 router.get('/city/:cityId/activities', async (req: Request, res: Response) => {
   try {
     const { cityId } = req.params;
@@ -152,14 +133,14 @@ router.get('/city/:cityId/activities', async (req: Request, res: Response) => {
 
     const activities = await bestTimeService.getCityActivities(id);
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Activities retrieved successfully',
       data: activities
     });
   } catch (error) {
     console.error('Error in /city/:cityId/activities route:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -167,10 +148,7 @@ router.get('/city/:cityId/activities', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/best-time/similar
- * Find similar destinations with best time data
- */
+// GET /similar
 router.get('/similar', async (req: Request, res: Response) => {
   try {
     const { lat, lng, limit } = req.query;
@@ -195,20 +173,16 @@ router.get('/similar', async (req: Request, res: Response) => {
       });
     }
 
-    const similarDestinations = await bestTimeService.searchSimilarDestinations(
-      latitude, 
-      longitude, 
-      resultLimit
-    );
+    const similarDestinations = await bestTimeService.searchSimilarDestinations(latitude, longitude, resultLimit);
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Similar destinations retrieved successfully',
       data: similarDestinations
     });
   } catch (error) {
     console.error('Error in /similar route:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -216,10 +190,7 @@ router.get('/similar', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/best-time/destinations
- * Get all available destinations with pagination
- */
+// GET /destinations
 router.get('/destinations', async (req: Request, res: Response) => {
   try {
     const { page, limit } = req.query;
@@ -229,7 +200,7 @@ router.get('/destinations', async (req: Request, res: Response) => {
 
     const destinations = await bestTimeService.getAllDestinations(limitNum, offset);
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Destinations retrieved successfully',
       data: {
@@ -243,7 +214,7 @@ router.get('/destinations', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error in /destinations route:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -251,10 +222,7 @@ router.get('/destinations', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/best-time/location
- * Add new location with best time data
- */
+// POST /location
 router.post('/location', async (req: Request, res: Response) => {
   try {
     const {
@@ -269,7 +237,6 @@ router.post('/location', async (req: Request, res: Response) => {
       idealTripDuration
     } = req.body;
 
-    // Validation
     if (!cityName || !countryName || !latitude || !longitude || !bestMonths || !bestTimeSummary) {
       return res.status(400).json({
         success: false,
@@ -298,14 +265,14 @@ router.post('/location', async (req: Request, res: Response) => {
       idealTripDuration: idealTripDuration ? parseInt(idealTripDuration) : undefined
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: 'Location added successfully',
       data: { cityId }
     });
   } catch (error) {
     console.error('Error in POST /location route:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -313,10 +280,7 @@ router.post('/location', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/best-time/search
- * Enhanced search that combines geocoding with best time data
- */
+// GET /search
 router.get('/search', async (req: Request, res: Response) => {
   try {
     const { q } = req.query;
@@ -330,12 +294,9 @@ router.get('/search', async (req: Request, res: Response) => {
     }
 
     const searchQuery = q as string;
-    
-    // Try to find exact match first
     let bestTimeData = await bestTimeService.getBestTimeByCity(searchQuery);
-    
+
     if (!bestTimeData) {
-      // If no exact match, try to parse as "City, Country"
       const parts = searchQuery.split(',').map(part => part.trim());
       if (parts.length === 2) {
         const [city, country] = parts;
@@ -344,13 +305,13 @@ router.get('/search', async (req: Request, res: Response) => {
     }
 
     if (bestTimeData) {
-      res.json({
+      return res.json({
         success: true,
         message: 'Best time data found',
         data: bestTimeData
       });
     } else {
-      res.status(404).json({
+      return res.status(404).json({
         success: false,
         message: 'No best time data found for this search query',
         data: null,
@@ -359,7 +320,7 @@ router.get('/search', async (req: Request, res: Response) => {
     }
   } catch (error) {
     console.error('Error in /search route:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Internal server error',
       error: error instanceof Error ? error.message : 'Unknown error'
