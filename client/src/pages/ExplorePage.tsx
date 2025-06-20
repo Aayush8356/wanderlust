@@ -70,27 +70,32 @@ const ExplorePage: React.FC = () => {
   // Infinite carousel auto-scroll
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentCarouselIndex(prev => (prev + 1) % 6); // 6 featured destinations
-    }, 4000); // Change every 4 seconds
+      setCurrentCarouselIndex(prev => (prev + 1) % featuredDestinations.length);
+    }, 5000); // Change every 5 seconds
 
     return () => clearInterval(interval);
   }, []);
 
-  // Update carousel transform
+  // Update carousel transform for single card view on mobile
   useEffect(() => {
     if (carouselRef.current) {
       const track = carouselRef.current.querySelector('.destinations-track') as HTMLElement;
       if (track) {
-        // Calculate card width based on screen size
         const isMobile = window.innerWidth <= 768;
-        const cardWidth = isMobile ? 280 : 350; // Actual card width
-        const gap = isMobile ? 16 : 24; // Gap from CSS: 1rem = 16px mobile, 1.5rem = 24px desktop
-        const totalCardWidth = cardWidth + gap;
         
-        // Start from left edge without any gap
-        const translateX = -(currentCarouselIndex % 6) * totalCardWidth;
-        
-        track.style.transform = `translateX(${translateX}px)`;
+        if (isMobile) {
+          // Mobile: Show one card at a time, full width
+          const containerWidth = carouselRef.current.offsetWidth;
+          const translateX = -(currentCarouselIndex % featuredDestinations.length) * containerWidth;
+          track.style.transform = `translateX(${translateX}px)`;
+        } else {
+          // Desktop: Original multi-card layout
+          const cardWidth = 350;
+          const gap = 24;
+          const totalCardWidth = cardWidth + gap;
+          const translateX = -(currentCarouselIndex % featuredDestinations.length) * totalCardWidth;
+          track.style.transform = `translateX(${translateX}px)`;
+        }
       }
     }
   }, [currentCarouselIndex]);
@@ -436,7 +441,7 @@ const ExplorePage: React.FC = () => {
           
           <div className="destinations-carousel-container" ref={carouselRef}>
             <div className="destinations-track">
-              {[...featuredDestinations, ...featuredDestinations, ...featuredDestinations].map((destination, index) => (
+              {featuredDestinations.map((destination, index) => (
                   <div 
                     key={`${destination.name}-${index}`}
                     className="destination-card carousel-card"
@@ -484,6 +489,18 @@ const ExplorePage: React.FC = () => {
                     </div>
                   </div>
                 ))}
+            </div>
+            
+            {/* Mobile Navigation Dots */}
+            <div className="carousel-dots mobile-only">
+              {featuredDestinations.map((_, index) => (
+                <button
+                  key={index}
+                  className={`carousel-dot ${index === (currentCarouselIndex % featuredDestinations.length) ? 'active' : ''}`}
+                  onClick={() => setCurrentCarouselIndex(index)}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
             </div>
           </div>
         </div>
