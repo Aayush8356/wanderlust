@@ -24,6 +24,8 @@ const ExplorePage: React.FC = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const destinationDetailsRef = useRef<HTMLElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -67,16 +69,18 @@ const ExplorePage: React.FC = () => {
     }
   }, [selectedDestination]);
 
-  // Infinite carousel auto-scroll
+  // Auto-scroll only for desktop, mobile uses swipe
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentCarouselIndex(prev => (prev + 1) % featuredDestinations.length);
-    }, 5000); // Change every 5 seconds
-
-    return () => clearInterval(interval);
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) {
+      const interval = setInterval(() => {
+        setCurrentCarouselIndex(prev => (prev + 1) % featuredDestinations.length);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
   }, []);
 
-  // Update carousel transform for single card view on mobile
+  // Update carousel for mobile (show/hide) vs desktop (transform)
   useEffect(() => {
     if (carouselRef.current) {
       const track = carouselRef.current.querySelector('.destinations-track') as HTMLElement;
@@ -84,12 +88,18 @@ const ExplorePage: React.FC = () => {
         const isMobile = window.innerWidth <= 768;
         
         if (isMobile) {
-          // Mobile: Show one card at a time, full width
-          const containerWidth = carouselRef.current.offsetWidth;
-          const translateX = -(currentCarouselIndex % featuredDestinations.length) * containerWidth;
-          track.style.transform = `translateX(${translateX}px)`;
+          // Mobile: Show only one card at a time
+          const cards = track.querySelectorAll('.destination-card') as NodeListOf<HTMLElement>;
+          cards.forEach((card, index) => {
+            card.classList.remove('active');
+            if (index === currentCarouselIndex % featuredDestinations.length) {
+              card.classList.add('active');
+            }
+          });
         } else {
-          // Desktop: Original multi-card layout
+          // Desktop: Original multi-card layout with transform
+          const cards = track.querySelectorAll('.destination-card') as NodeListOf<HTMLElement>;
+          cards.forEach(card => card.classList.remove('active'));
           const cardWidth = 350;
           const gap = 24;
           const totalCardWidth = cardWidth + gap;
@@ -98,6 +108,41 @@ const ExplorePage: React.FC = () => {
         }
       }
     }
+  }, [currentCarouselIndex]);
+
+  // Handle window resize for mobile carousel
+  useEffect(() => {
+    const handleResize = () => {
+      if (carouselRef.current) {
+        const track = carouselRef.current.querySelector('.destinations-track') as HTMLElement;
+        if (track) {
+          const isMobile = window.innerWidth <= 768;
+          const cards = track.querySelectorAll('.destination-card') as NodeListOf<HTMLElement>;
+          
+          if (isMobile) {
+            // Mobile: Show only active card
+            cards.forEach((card, index) => {
+              card.classList.remove('active');
+              if (index === currentCarouselIndex % featuredDestinations.length) {
+                card.classList.add('active');
+              }
+            });
+            track.style.transform = 'none';
+          } else {
+            // Desktop: Remove active classes and use transform
+            cards.forEach(card => card.classList.remove('active'));
+            const cardWidth = 350;
+            const gap = 24;
+            const totalCardWidth = cardWidth + gap;
+            const translateX = -(currentCarouselIndex % featuredDestinations.length) * totalCardWidth;
+            track.style.transform = `translateX(${translateX}px)`;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [currentCarouselIndex]);
 
 
@@ -217,6 +262,31 @@ const ExplorePage: React.FC = () => {
       'Turkey': '🇹🇷'
     };
     return flags[country || ''] || '🌍';
+  };
+
+  // Touch handlers for mobile swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEndX(null);
+    setTouchStartX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX || !touchEndX) return;
+    
+    const distance = touchStartX - touchEndX;
+    const minSwipeDistance = 50;
+
+    if (distance > minSwipeDistance) {
+      // Swipe left - next card
+      setCurrentCarouselIndex(prev => (prev + 1) % featuredDestinations.length);
+    } else if (distance < -minSwipeDistance) {
+      // Swipe right - previous card
+      setCurrentCarouselIndex(prev => prev === 0 ? featuredDestinations.length - 1 : prev - 1);
+    }
   };
 
   const getDestinationDescription = (name: string): string => {
@@ -439,7 +509,13 @@ const ExplorePage: React.FC = () => {
             </p>
           </div>
           
-          <div className="destinations-carousel-container" ref={carouselRef}>
+          <div 
+            className="destinations-carousel-container" 
+            ref={carouselRef}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div className="destinations-track">
               {featuredDestinations.map((destination, index) => (
                   <div 
@@ -491,17 +567,6 @@ const ExplorePage: React.FC = () => {
                 ))}
             </div>
             
-            {/* Mobile Navigation Dots */}
-            <div className="carousel-dots mobile-only">
-              {featuredDestinations.map((_, index) => (
-                <button
-                  key={index}
-                  className={`carousel-dot ${index === (currentCarouselIndex % featuredDestinations.length) ? 'active' : ''}`}
-                  onClick={() => setCurrentCarouselIndex(index)}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
-            </div>
           </div>
         </div>
       </section>

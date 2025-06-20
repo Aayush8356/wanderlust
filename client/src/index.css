@@ -4162,39 +4162,49 @@ body {
     opacity: 0.8;
   }
   
-  /* Destinations carousel mobile - SINGLE CARD VIEW */
+  /* Mobile carousel - SINGLE CARD ONLY */
   .destinations-carousel-container {
     overflow: hidden;
     width: 100%;
     position: relative;
-    padding: 0 1rem;
+    padding: 0;
+    margin: 0;
   }
   
   .destinations-track {
-    display: flex;
-    gap: 1rem;
-    transition: transform 0.5s ease;
+    display: block;
+    position: relative;
     width: 100%;
+    height: auto;
   }
   
-  /* Destination cards mobile - FULL WIDTH SINGLE CARD */
+  /* Hide all cards except current one on mobile */
   .destination-card.carousel-card {
-    width: 100%;
-    max-width: calc(100vw - 2rem);
+    display: none;
+    width: calc(100% - 2rem);
+    max-width: 400px;
+    min-width: auto;
     height: auto;
-    min-height: 500px;
+    min-height: 400px;
     flex-shrink: 0;
-    border-radius: 1.25rem;
+    border-radius: 1rem;
     overflow: hidden;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: none;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     margin: 0 auto;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Show only the active card */
+  .destination-card.carousel-card.active {
+    display: block;
   }
   
   .card-image {
-    height: 220px;
+    height: 180px;
     position: relative;
     overflow: hidden;
     width: 100%;
@@ -4318,38 +4328,6 @@ body {
     font-size: 0.9rem;
   }
   
-  /* Mobile Navigation Dots */
-  .carousel-dots {
-    display: flex;
-    justify-content: center;
-    gap: 0.75rem;
-    margin-top: 2rem;
-    padding: 1rem 0;
-  }
-  
-  .carousel-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(255, 255, 255, 0.4);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    padding: 0;
-  }
-  
-  .carousel-dot.active {
-    background: var(--primary-500);
-    transform: scale(1.2);
-  }
-  
-  .carousel-dot:hover {
-    background: rgba(255, 255, 255, 0.6);
-  }
-  
-  .mobile-only {
-    display: block;
-  }
   
   /* CTA section mobile */
   .explore-cta {
@@ -4485,9 +4463,6 @@ body {
 
 /* Desktop styles */
 @media (min-width: 769px) {
-  .mobile-only {
-    display: none;
-  }
   
   .destinations-carousel-container {
     overflow: visible;
